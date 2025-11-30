@@ -280,18 +280,17 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-3">
-                        <span class="text-2xl">🎧</span>
+                    <div class="flex items-start gap-3">
+                        <span class="text-2xl mt-1">🎧</span>
                         <div class="flex-1">
-                            <label class="block text-sm font-semibold mb-1 text-white">Or Upload MP3 (Optional)</label>
+                            <label class="block text-sm font-semibold mb-1 text-white">Optional MP3 Upload (Custom only)</label>
                             <div class="flex items-center gap-2">
-                                <input type="file" id="custom-mp3-upload" accept="audio/mp3,audio/mpeg,audio/*" class="hidden">
-                                <button id="custom-mp3-btn" class="px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-lg text-white font-bold transition-all flex items-center gap-2">
-                                    <span>📁</span> Choose MP3
-                                </button>
-                                <span id="custom-mp3-name" class="text-sm text-gray-300 flex-1">No file selected</span>
+                                <input type="file" id="custom-mp3-upload" accept=".mp3,audio/mpeg,audio/mp3" class="hidden">
+                                <button id="custom-mp3-btn" type="button" class="px-4 py-3 rounded-lg bg-purple-600/70 hover:bg-purple-500/70 border border-white/20 text-white font-bold transition-all shrink-0">Browse MP3</button>
+                                <button id="custom-mp3-clear" type="button" class="px-3 py-3 rounded-lg bg-white/10 hover:bg-white/15 border border-white/20 text-white/90 font-semibold transition-all shrink-0">Clear</button>
+                                <span id="custom-mp3-name" class="text-xs text-purple-200 truncate">No file</span>
                             </div>
-                            <p class="text-xs text-gray-400 mt-1">Upload an MP3 instead of using YouTube audio</p>
+                            <p class="text-xs text-gray-400 mt-1">If set, the game uses this MP3 for audio + timing (YouTube will be paused/muted).</p>
                         </div>
                     </div>
                 </div>
@@ -431,6 +430,14 @@
                     <span>Offset:</span>
                     <input type="range" id="offset-slider" min="-500" max="500" value="0" step="10" class="w-24 accent-cyan-500">
                     <span id="offset-val">0ms</span>
+                </div>
+                <div class="flex items-center gap-2 border-l border-gray-600 pl-4">
+                    <label class="cursor-pointer hover:text-white transition flex items-center gap-2">
+                        <span>🎵 Upload MP3:</span>
+                        <input type="file" id="mp3-upload" accept="audio/mp3" class="hidden">
+                        <button id="mp3-btn" class="px-3 py-1 bg-purple-600 hover:bg-purple-500 rounded text-white text-xs font-bold transition">Browse</button>
+                    </label>
+                    <span id="mp3-name" class="text-xs text-purple-300">No file</span>
                 </div>
             </div>
         </div>
@@ -895,8 +902,17 @@
 
             triggerMiss(note) {
                 note.hit = true;
-                note.element.style.opacity = 0.5;
+                note.element.style.opacity = 0.3;
                 note.element.style.backgroundColor = 'gray';
+                // Fade out and remove the missed note
+                setTimeout(() => {
+                    note.element.style.transition = 'opacity 0.3s ease-out';
+                    note.element.style.opacity = '0';
+                    setTimeout(() => {
+                        note.element.style.display = 'none';
+                        note.element.remove();
+                    }, 300);
+                }, 100);
                 this.combo = 0;
                 this.misses++;
                 this.showFeedback('MISS', 'text-red-600', note.track);
@@ -963,33 +979,11 @@
             document.getElementById('tab-default').classList.remove('bg-pink-500');
         });
 
-        // Custom MP3 upload handling
-        const customMp3Btn = document.getElementById('custom-mp3-btn');
-        const customMp3Upload = document.getElementById('custom-mp3-upload');
-        const customMp3Name = document.getElementById('custom-mp3-name');
-        
-        customMp3Btn.addEventListener('click', () => {
-            customMp3Upload.click();
-        });
-        
-        customMp3Upload.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file && file.type.includes('audio')) {
-                const fileURL = URL.createObjectURL(file);
-                mp3Player.src = fileURL;
-                customMp3Name.innerText = file.name;
-                customMp3Name.style.color = '#a78bfa'; // purple color
-            } else if (file) {
-                alert('❌ Please select a valid audio file');
-            }
-        });
-
         document.getElementById('load-custom-btn').addEventListener('click', () => {
             const youtubeLink = document.getElementById('custom-youtube-link').value;
             const songTitle = document.getElementById('custom-song-title').value;
             const notesJsonString = document.getElementById('custom-notes-json').value;
             const offset = parseFloat(document.getElementById('custom-offset').value);
-            const hasMP3 = mp3Player.src && customMp3Name.innerText !== 'No file selected';
 
             try {
                 const notesData = JSON.parse(notesJsonString);
@@ -1006,43 +1000,39 @@
                 }
 
                 let videoId = '';
-                if (!hasMP3) {
-                    const patterns = [
-                        /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
-                        /youtube\.com\/embed\/([^?&\n]+)/
-                    ];
+                const patterns = [
+                    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
+                    /youtube\.com\/embed\/([^?&\n]+)/
+                ];
 
-                    for (let pattern of patterns) {
-                        const match = youtubeLink.match(pattern);
-                        if (match) {
-                            videoId = match[1];
-                            break;
-                        }
+                for (let pattern of patterns) {
+                    const match = youtubeLink.match(pattern);
+                    if (match) {
+                        videoId = match[1];
+                        break;
                     }
+                }
 
-                    if (!videoId && !hasMP3) {
-                        alert('Please provide either a YouTube link or upload an MP3 file.');
-                        return;
-                    }
+                if (!videoId) {
+                    alert('Could not extract video ID from YouTube link. Please use a valid YouTube URL.');
+                    return;
                 }
 
                 customSongData = {
                     title: songTitle || 'Custom Song',
                     videoId: videoId,
                     notes: extractedNotes,
-                    offset: offset,
-                    hasMP3: hasMP3
+                    offset: offset
                 };
 
                 document.querySelector('h2').innerText = customSongData.title;
-                document.querySelector('p.text-gray-400').innerText = hasMP3 ? 'Custom Song (MP3)' : 'Custom Song';
+                document.querySelector('p.text-gray-400').innerText = 'Custom Song';
 
-                if (videoId && player && isPlayerReady) {
+                if (player && isPlayerReady) {
                     player.cueVideoById(videoId);
                 }
 
-                const audioSource = hasMP3 ? 'MP3' : 'YouTube';
-                alert(`✅ Custom song loaded successfully!\n🎵 Audio: ${audioSource}\n🎮 Click "CLICK TO START" to begin playing.`);
+                alert('Custom song loaded successfully! Click "CLICK TO START" to begin playing.');
                 
             } catch (error) {
                 alert('Error parsing JSON: ' + error.message);
@@ -1050,7 +1040,71 @@
         });
 
         const game = new RhythmGame();
+        
+        // MP3 Upload functionality (in-game)
+        const mp3Btn = document.getElementById('mp3-btn');
+        const mp3Upload = document.getElementById('mp3-upload');
+        const mp3Name = document.getElementById('mp3-name');
         const mp3Player = document.getElementById('mp3-player');
+        
+        mp3Btn.addEventListener('click', () => {
+            mp3Upload.click();
+        });
+        
+        mp3Upload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && file.type.includes('audio')) {
+                const fileURL = URL.createObjectURL(file);
+                mp3Player.src = fileURL;
+                mp3Name.innerText = file.name;
+                mp3Name.style.color = '#86efac'; // green color
+                
+                // Replace YouTube player timing with MP3 player timing
+                window.getGameTime = () => {
+                    return mp3Player.currentTime * 1000;
+                };
+                
+                alert(`✅ MP3 loaded: ${file.name}\nThe game will now use this audio instead of YouTube.`);
+            } else {
+                alert('❌ Please select a valid audio file');
+            }
+        });
+
+        // Custom Song MP3 Upload functionality (start screen)
+        const customMp3Btn = document.getElementById('custom-mp3-btn');
+        const customMp3Upload = document.getElementById('custom-mp3-upload');
+        const customMp3Name = document.getElementById('custom-mp3-name');
+        const customMp3Clear = document.getElementById('custom-mp3-clear');
+        let customMp3File = null;
+        
+        customMp3Btn.addEventListener('click', () => {
+            customMp3Upload.click();
+        });
+        
+        customMp3Clear.addEventListener('click', () => {
+            customMp3File = null;
+            customMp3Upload.value = '';
+            customMp3Name.innerText = 'No file';
+            customMp3Name.style.color = '';
+            mp3Player.src = '';
+        });
+        
+        customMp3Upload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && file.type.includes('audio')) {
+                customMp3File = file;
+                customMp3Name.innerText = file.name;
+                customMp3Name.style.color = '#86efac'; // green color
+                
+                // Preload the MP3
+                const fileURL = URL.createObjectURL(file);
+                mp3Player.src = fileURL;
+                
+                alert(`✅ MP3 loaded: ${file.name}\nThis audio will be used instead of YouTube when you start the custom song.`);
+            } else {
+                alert('❌ Please select a valid audio file');
+            }
+        });
 
     </script>
 </body>
