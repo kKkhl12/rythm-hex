@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rhythm Game - Nuts by Lil Peep</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(120, 219, 255, 0.3) 0%, transparent 50%),
+                linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f0c29 75%, #1a1a2e 100%);
+            color: white;
+            overflow: hidden;
+            user-select: none;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 30% 40%, rgba(255, 0, 150, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 70% 60%, rgba(0, 255, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background:
+                radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                linear-gradient(135deg, rgba(15, 12, 41, 0.95) 0%, rgba(26, 26, 46, 0.95) 50%, rgba(15, 12, 41, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 1s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .track-container {
+            perspective: 1000px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 1rem;
+            padding: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        
+        .track-lane {
+            position: relative;
+            height: 500px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.05), rgba(255,255,255,0.1));
+            border-left: 1px solid rgba(255,255,255,0.1);
+            border-right: 1px solid rgba(255,255,255,0.1);
+            overflow: hidden;
+        }
+        
+        .hit-line {
+            position: absolute;
+            bottom: 60px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.6);
+            z-index: 10;
+        }
+        
+        .hit-target {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 54px;
+            height: 54px;
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            border-radius: 12px;
+            transition: all 0.08s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.4rem;
+            color: rgba(255, 255, 255, 0.6);
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .hit-target.active {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-color: white;
+            box-shadow: 0 0 25px white, 0 0 50px rgba(255, 255, 255, 0.5);
+            transform: translateX(-50%) scale(1.15);
+            color: #111;
+        }
+        
+        .note {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+            box-shadow: 0 0 10px rgba(255, 107, 107, 0.8);
+            z-index: 20;
+            will-change: top;
+        }
+
+        .note.hit {
+            opacity: 0;
+            transform: translateX(-50%) scale(1.5);
+            transition: all 0.1s ease-out;
+        }
+        
+        /* Key Indicators */
+        .key-display {
+            margin-top: 10px;
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.1s;
+        }
+        
+        .key-display.active {
+            background: rgba(255, 255, 255, 0.9);
+            color: black;
+            transform: translateY(4px);
+        }
+
+        .score-pop {
+            position: absolute;
+            left: 50%;
+            bottom: 150px;
+            transform: translateX(-50%);
+            font-size: 24px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 0.5s ease-out forwards;
+            z-index: 30;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-30px) scale(1.2); }
+        }
+
+        /* Utility */
+        .hidden { display: none !important; }
+        
+        /* Custom scrollbar for settings */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+    </style>
+</head>
+<body class="h-screen flex flex-col items-center justify-center">
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="start-screen">
+        <div class="text-center mb-8">
+            <h1 class="text-8xl font-black mb-4 text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-400 via-cyan-400 to-blue-400 animate-pulse">
+                RHYTHM
+            </h1>
+            <div class="w-32 h-1 bg-gradient-to-r from-pink-500 to-purple-500 mx-auto rounded-full"></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex gap-2 mb-8 p-2 bg-white/5 rounded-2xl backdrop-blur-sm border border-white/10">
+            <button id="tab-default" class="tab-btn active flex-1 px-8 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-pink-500/25">
+                <span class="text-lg">🎵 Default Song</span>
+            </button>
+            <button id="tab-custom" class="tab-btn flex-1 px-8 py-3 rounded-xl bg-gray-600/50 text-white font-bold transition-all duration-300 hover:scale-105 hover:bg-gray-500/50 hover:shadow-lg hover:shadow-gray-500/25">
+                <span class="text-lg">🎼 Custom Song</span>
+            </button>
+        </div>
+
+        <!-- Default Song Tab -->
+        <div id="content-default" class="tab-content max-w-lg w-full">
+            <div class="bg-gradient-to-br from-pink-500/20 to-purple-600/20 p-8 rounded-2xl backdrop-blur-md border border-white/20 mb-8 shadow-2xl">
+                <div class="text-center mb-6">
+                    <h2 class="text-4xl font-bold text-white mb-2">Nuts</h2>
+                    <p class="text-xl text-pink-300 font-medium">Lil Peep</p>
+                    <div class="flex items-center justify-center gap-2 mt-3">
+                        <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <span class="text-sm text-gray-300">Ready to Play</span>
+                    </div>
+                </div>
+
+                <div class="bg-black/30 p-6 rounded-xl border border-white/10">
+                    <h3 class="text-lg font-semibold mb-4 text-center text-white flex items-center justify-center gap-2">
+                        <span class="text-2xl">🎯</span> How to Play
+                    </h3>
+                    <div class="grid grid-cols-4 gap-3 mb-6">
+                        <div class="flex flex-col items-center p-3 bg-white/10 rounded-lg border border-white/20 hover:bg-white/20 transition-colors">
+                            <div class="w-12 h-12 border-2 border-pink-400 rounded-lg flex items-center justify-center font-bold text-lg text-white mb-2 shadow-lg">D</div>
+                            <span class="text-xs text-gray-300">Lane 1</span>
+                        </div>
+                        <div class="flex flex-col items-center p-3 bg-white/10 rounded-lg border border-white/20 hover:bg-white/20 transition-colors">
+                            <div class="w-12 h-12 border-2 border-purple-400 rounded-lg flex items-center justify-center font-bold text-lg text-white mb-2 shadow-lg">F</div>
+                            <span class="text-xs text-gray-300">Lane 2</span>
+                        </div>
+                        <div class="flex flex-col items-center p-3 bg-white/10 rounded-lg border border-white/20 hover:bg-white/20 transition-colors">
+                            <div class="w-12 h-12 border-2 border-cyan-400 rounded-lg flex items-center justify-center font-bold text-lg text-white mb-2 shadow-lg">J</div>
+                            <span class="text-xs text-gray-300">Lane 3</span>
+                        </div>
+                        <div class="flex flex-col items-center p-3 bg-white/10 rounded-lg border border-white/20 hover:bg-white/20 transition-colors">
+                            <div class="w-12 h-12 border-2 border-blue-400 rounded-lg flex items-center justify-center font-bold text-lg text-white mb-2 shadow-lg">K</div>
+                            <span class="text-xs text-gray-300">Lane 4</span>
+                        </div>
+                    </div>
+                    <p class="text-center text-sm text-gray-300 leading-relaxed">
+                        Press the corresponding keys when the falling notes align with the glowing targets below.
+                        <br><span class="text-pink-300 font-medium">Perfect timing = Higher scores!</span>
+                    </p>
+                </div>
+            </div>
+
+            <button id="start-btn" disabled class="group relative px-12 py-5 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 text-white font-bold rounded-2xl text-2xl overflow-hidden hover:scale-105 transition-all duration-300 w-full shadow-2xl hover:shadow-pink-500/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100">
+                <span class="relative z-10 flex items-center justify-center gap-3">
+                    <span class="animate-spin" id="loading-spinner" style="display: none;">⏳</span>
+                    <span id="start-text">LOADING...</span>
+                </span>
+                <div class="absolute inset-0 bg-gradient-to-r from-pink-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+                <div class="absolute inset-0 bg-white/10 rounded-2xl"></div>
+            </button>
+        </div>
+
+        <!-- Custom Song Tab -->
+        <div id="content-custom" class="tab-content max-w-lg w-full hidden">
+            <div class="bg-gradient-to-br from-purple-500/20 to-cyan-600/20 p-8 rounded-2xl backdrop-blur-md border border-white/20 mb-8 shadow-2xl">
+                <div class="text-center mb-6">
+                    <h2 class="text-3xl font-bold text-white mb-2">🎼 Custom Song</h2>
+                    <p class="text-lg text-purple-300 font-medium">Create Your Own Rhythm Game</p>
+                    <div class="flex items-center justify-center gap-2 mt-3">
+                        <div class="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                        <span class="text-sm text-gray-300">Load a YouTube video and notes</span>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">🎵</span>
+                        <div class="flex-1">
+                            <label class="block text-sm font-semibold mb-1 text-white">YouTube Link</label>
+                            <input type="text" id="custom-youtube-link" placeholder="https://www.youtube.com/watch?v=..." class="w-full px-4 py-3 rounded-lg bg-black/60 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 transition-all">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">📝</span>
+                        <div class="flex-1">
+                            <label class="block text-sm font-semibold mb-1 text-white">Song Title</label>
+                            <input type="text" id="custom-song-title" placeholder="Enter song title" class="w-full px-4 py-3 rounded-lg bg-black/60 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 transition-all">
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-3">
+                        <span class="text-2xl mt-1">🎯</span>
+                        <div class="flex-1">
+                            <label class="block text-sm font-semibold mb-1 text-white">Notes JSON</label>
+                            <textarea id="custom-notes-json" placeholder='{"notes": [{"time": 1.5, "note": "D"}, {"time": 2.0, "note": "F"}, ...]}' class="w-full px-4 py-3 rounded-lg bg-black/60 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 transition-all h-40 resize-none font-mono text-sm leading-relaxed"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">⏱️</span>
+                        <div class="flex-1">
+                            <label class="block text-sm font-semibold mb-1 text-white">Start Offset (seconds)</label>
+                            <input type="number" id="custom-offset" value="7.4" step="0.1" min="0" class="w-full px-4 py-3 rounded-lg bg-black/60 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 transition-all">
+                        </div>
+                    </div>
+                </div>
+
+                <button id="load-custom-btn" class="group relative w-full mt-6 px-8 py-4 bg-gradient-to-r from-purple-500 via-cyan-500 to-blue-500 text-white font-bold rounded-xl text-lg overflow-hidden hover:scale-105 transition-all duration-300 shadow-2xl hover:shadow-purple-500/50">
+                    <span class="relative z-10 flex items-center justify-center gap-3">
+                        <span>🎮 Load Custom Song</span>
+                    </span>
+                    <div class="absolute inset-0 bg-gradient-to-r from-purple-600 to-cyan-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"></div>
+                    <div class="absolute inset-0 bg-white/10 rounded-xl"></div>
+                </button>
+
+                <div class="mt-4 p-4 bg-black/40 rounded-lg border border-white/20">
+                    <h4 class="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+                        <span>💡</span> JSON Format Guide
+                    </h4>
+                    <p class="text-xs text-gray-300 leading-relaxed">
+                        Use <code class="bg-black/50 px-1 py-0.5 rounded text-purple-300">{"notes": [...]}</code> or direct array.
+                        Each note: <code class="bg-black/50 px-1 py-0.5 rounded text-cyan-300">{"time": seconds, "note": "D/F/J/K"}</code>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Interface -->
+    <div id="game-interface" class="w-full max-w-4xl h-full flex flex-col p-4 hidden">
+        <!-- Header Stats -->
+        <div class="flex justify-between items-end mb-4 px-4">
+            <div>
+                <h2 class="text-2xl font-bold">Nuts</h2>
+                <p class="text-sm text-gray-400">Lil Peep</p>
+            </div>
+            <div class="flex gap-8">
+                <div class="text-center">
+                    <div class="text-xs text-gray-400 uppercase tracking-wider">Score</div>
+                    <div id="score-display" class="text-3xl font-bold font-mono">000000</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-xs text-gray-400 uppercase tracking-wider">Combo</div>
+                    <div id="combo-display" class="text-3xl font-bold text-blue-400 font-mono">0</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-xs text-gray-400 uppercase tracking-wider">Accuracy</div>
+                    <div id="accuracy-display" class="text-3xl font-bold text-green-400 font-mono">100%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Game Area -->
+        <div class="flex-1 relative flex justify-center items-center">
+            <div class="track-container relative w-full max-w-2xl h-full flex flex-col">
+                <!-- Tracks -->
+                <div class="flex-1 flex relative">
+                    <!-- Lane D -->
+                    <div class="flex-1 track-lane" id="track-0">
+                        <div class="hit-line"></div>
+                        <div class="hit-target" id="target-0">D</div>
+                    </div>
+                    <!-- Lane F -->
+                    <div class="flex-1 track-lane" id="track-1">
+                        <div class="hit-line"></div>
+                        <div class="hit-target" id="target-1">F</div>
+                    </div>
+                    <!-- Lane J -->
+                    <div class="flex-1 track-lane" id="track-2">
+                        <div class="hit-line"></div>
+                        <div class="hit-target" id="target-2">J</div>
+                    </div>
+                    <!-- Lane K -->
+                    <div class="flex-1 track-lane" id="track-3">
+                        <div class="hit-line"></div>
+                        <div class="hit-target" id="target-3">K</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- YouTube Embed (off-screen but playing audio) -->
+            <div id="player-container" style="position: fixed; top: -9999px; left: -9999px;">
+                <div id="player"></div>
+            </div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="mt-4 bg-black/40 p-4 rounded-lg backdrop-blur-sm flex justify-between items-center">
+            <div class="flex gap-6 text-sm">
+                <label class="flex items-center gap-2 cursor-pointer hover:text-white text-gray-300 transition">
+                    <input type="checkbox" id="toggle-hit-sound" checked class="accent-pink-500">
+                    Hit Sounds
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer hover:text-white text-gray-300 transition">
+                    <input type="checkbox" id="toggle-key-sound" checked class="accent-pink-500">
+                    Key Sounds
+                </label>
+                <label class="flex items-center gap-2 cursor-pointer hover:text-white text-gray-300 transition">
+                    <input type="checkbox" id="toggle-autoplay" class="accent-blue-500">
+                    <span class="text-blue-300 font-bold">Autoplay (Bot)</span>
+                </label>
+            </div>
+            <div class="flex items-center gap-2 text-sm text-gray-400">
+                <span>Speed:</span>
+                <input type="range" id="speed-slider" min="1" max="20" value="8" class="w-24 accent-purple-500">
+                <span id="speed-val">8</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // YouTube API
+        let player;
+        let isPlayerReady = false;
+
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '200',
+                width: '300',
+                videoId: '_xRN3dTg9s0',
+                playerVars: {
+                    'playsinline': 1,
+                    'controls': 0,
+                    'disablekb': 1
+                },
+                events: {
+                    'onReady': onPlayerReady
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            isPlayerReady = true;
+            const btn = document.getElementById('start-btn');
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            btn.innerHTML = '<span class="relative z-10">CLICK TO START</span><div class="absolute inset-0 bg-gradient-to-r from-pink-500 to-purple-600 opacity-0 group-hover:opacity-20 transition-opacity duration-200"></div>';
+            btn.disabled = false;
+        }
+
+        // Load YouTube API
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        // Game Logic
+        const KEYS = ['d', 'f', 'j', 'k'];
+        const KEY_CODES = ['KeyD', 'KeyF', 'KeyJ', 'KeyK'];
+        
+        // Game Constants
+        const TRACK_HEIGHT = 500;
+        const HIT_LINE_Y = TRACK_HEIGHT - 80; // 420px from top
+        const HIT_WINDOW_PERFECT = 30; // +/- pixels
+        const HIT_WINDOW_GOOD = 70;
+        
+        class RhythmGame {
+            constructor() {
+                this.isPlaying = false;
+                this.startTime = 0;
+                this.notes = []; // { track: 0-3, time: ms, element: DOM, hit: bool }
+                this.noteSpeed = 8; // Pixels per frame (approx)
+                this.score = 0;
+                this.combo = 0;
+                this.maxCombo = 0;
+                this.perfects = 0;
+                this.goods = 0;
+                this.misses = 0;
+                
+                this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                this.settings = {
+                    hitSound: true,
+                    keySound: true,
+                    autoplay: false
+                };
+
+                this.bindEvents();
+            }
+
+            bindEvents() {
+                // Keyboard Inputs
+                window.addEventListener('keydown', (e) => {
+                    if (e.repeat) return;
+                    const keyIndex = KEY_CODES.indexOf(e.code);
+                    if (keyIndex !== -1) {
+                        if(e.code === 'KeyF') e.preventDefault(); // Stop fullscreen
+                        this.handleInput(keyIndex);
+                        this.visualizeKey(keyIndex, true);
+                    }
+                });
+
+                window.addEventListener('keyup', (e) => {
+                    const keyIndex = KEY_CODES.indexOf(e.code);
+                    if (keyIndex !== -1) {
+                        this.visualizeKey(keyIndex, false);
+                    }
+                });
+
+                // UI Controls
+                document.getElementById('start-btn').addEventListener('click', () => this.startGame());
+                
+                document.getElementById('toggle-hit-sound').addEventListener('change', (e) => this.settings.hitSound = e.target.checked);
+                document.getElementById('toggle-key-sound').addEventListener('change', (e) => this.settings.keySound = e.target.checked);
+                document.getElementById('toggle-autoplay').addEventListener('change', (e) => this.settings.autoplay = e.target.checked);
+                
+                const speedSlider = document.getElementById('speed-slider');
+                speedSlider.addEventListener('input', (e) => {
+                    this.noteSpeed = parseInt(e.target.value);
+                    document.getElementById('speed-val').innerText = this.noteSpeed;
+                });
+            }
+
+            generateSongMap() {
+                // Check if custom song is loaded
+                if (customSongData) {
+                    const noteToTrack = { 'D': 0, 'F': 1, 'J': 2, 'K': 3 };
+                    const OFFSET = customSongData.offset * 1000; // Convert to milliseconds
+                    const map = customSongData.notes.map(n => ({
+                        track: noteToTrack[n.note],
+                        time: n.time * 1000 + OFFSET
+                    }));
+                    return map;
+                }
+
+                // Default song: Actual note data from Lil Peep - Nuts
+                const rawNotes = [
+                    {"time": 7.678, "note": "D"},
+                    {"time": 8.022, "note": "F"},
+                    {"time": 8.191, "note": "J"},
+                    {"time": 8.4, "note": "D"},
+                    {"time": 8.59, "note": "K"},
+                    {"time": 8.799, "note": "F"},
+                    {"time": 9.062, "note": "K"},
+                    {"time": 9.358, "note": "F"},
+                    {"time": 9.767, "note": "K"},
+                    {"time": 10.039, "note": "D"},
+                    {"time": 10.239, "note": "J"},
+                    {"time": 10.519, "note": "F"},
+                    {"time": 10.742, "note": "K"},
+                    {"time": 11.046, "note": "K"},
+                    {"time": 11.71, "note": "D"},
+                    {"time": 11.918, "note": "J"},
+                    {"time": 12.19, "note": "F"},
+                    {"time": 12.44, "note": "K"},
+                    {"time": 12.662, "note": "D"},
+                    {"time": 12.894, "note": "J"},
+                    {"time": 13.191, "note": "F"},
+                    {"time": 13.662, "note": "K"},
+                    {"time": 13.886, "note": "D"},
+                    {"time": 14.102, "note": "J"},
+                    {"time": 14.334, "note": "F"},
+                    {"time": 14.582, "note": "D"},
+                    {"time": 14.878, "note": "F"},
+                    {"time": 15.486, "note": "J"},
+                    {"time": 15.798, "note": "D"},
+                    {"time": 15.974, "note": "K"},
+                    {"time": 16.497, "note": "F"},
+                    {"time": 16.502, "note": "J"},
+                    {"time": 16.982, "note": "D"},
+                    {"time": 17.007, "note": "K"},
+                    {"time": 17.479, "note": "J"},
+                    {"time": 17.766, "note": "F"},
+                    {"time": 18.006, "note": "J"},
+                    {"time": 18.286, "note": "F"},
+                    {"time": 18.51, "note": "D"},
+                    {"time": 19.006, "note": "D"},
+                    {"time": 19.008, "note": "K"},
+                    {"time": 19.43, "note": "J"},
+                    {"time": 19.638, "note": "F"},
+                    {"time": 19.902, "note": "K"},
+                    {"time": 20.142, "note": "D"},
+                    {"time": 20.342, "note": "J"},
+                    {"time": 20.83, "note": "D"},
+                    {"time": 20.854, "note": "K"},
+                    {"time": 21.382, "note": "F"},
+                    {"time": 21.623, "note": "J"},
+                    {"time": 21.87, "note": "D"},
+                    {"time": 22.023, "note": "K"},
+                    {"time": 22.239, "note": "F"},
+                    {"time": 22.391, "note": "D"},
+                    {"time": 22.79, "note": "F"},
+                    {"time": 22.823, "note": "J"},
+                    {"time": 23.272, "note": "D"},
+                    {"time": 23.534, "note": "K"},
+                    {"time": 23.766, "note": "F"},
+                    {"time": 23.974, "note": "J"},
+                    {"time": 24.198, "note": "D"},
+                    {"time": 24.386, "note": "K"},
+                    {"time": 24.783, "note": "F"},
+                    {"time": 24.784, "note": "J"},
+                    {"time": 24.982, "note": "F"},
+                    {"time": 25.026, "note": "J"},
+                    {"time": 25.198, "note": "F"},
+                    {"time": 25.23, "note": "J"},
+                    {"time": 25.598, "note": "K"},
+                    {"time": 25.87, "note": "D"},
+                    {"time": 26.128, "note": "K"},
+                    {"time": 26.362, "note": "D"},
+                    {"time": 26.606, "note": "J"},
+                    {"time": 26.902, "note": "F"},
+                    {"time": 27.128, "note": "K"},
+                    {"time": 27.39, "note": "D"},
+                    {"time": 27.718, "note": "J"},
+                    {"time": 27.897, "note": "F"},
+                    {"time": 28.111, "note": "K"},
+                    {"time": 28.287, "note": "D"},
+                    {"time": 28.648, "note": "J"},
+                    {"time": 29.633, "note": "J"},
+                    {"time": 29.636, "note": "K"},
+                    {"time": 29.655, "note": "D"},
+                    {"time": 29.657, "note": "F"},
+                    {"time": 30.927, "note": "J"},
+                    {"time": 31.159, "note": "F"},
+                    {"time": 31.358, "note": "K"},
+                    {"time": 31.91, "note": "D"},
+                    {"time": 32.11, "note": "J"},
+                    {"time": 32.32, "note": "F"},
+                    {"time": 32.554, "note": "K"},
+                    {"time": 32.79, "note": "D"},
+                    {"time": 33.008, "note": "J"},
+                    {"time": 33.367, "note": "F"},
+                    {"time": 33.583, "note": "K"},
+                    {"time": 33.807, "note": "D"},
+                    {"time": 33.975, "note": "J"},
+                    {"time": 34.23, "note": "F"},
+                    {"time": 34.441, "note": "K"},
+                    {"time": 34.656, "note": "D"},
+                    {"time": 34.871, "note": "J"},
+                    {"time": 35.103, "note": "F"},
+                    {"time": 35.311, "note": "K"},
+                    {"time": 35.598, "note": "D"},
+                    {"time": 35.825, "note": "J"},
+                    {"time": 36.047, "note": "F"},
+                    {"time": 36.271, "note": "J"},
+                    {"time": 36.527, "note": "D"},
+                    {"time": 36.735, "note": "K"},
+                    {"time": 36.946, "note": "F"},
+                    {"time": 37.03, "note": "J"},
+                    {"time": 37.687, "note": "K"},
+                    {"time": 38.239, "note": "D"},
+                    {"time": 38.282, "note": "K"},
+                    {"time": 38.719, "note": "J"},
+                    {"time": 38.948, "note": "F"},
+                    {"time": 39.191, "note": "K"},
+                    {"time": 39.516, "note": "D"},
+                    {"time": 39.719, "note": "J"},
+                    {"time": 40.017, "note": "F"},
+                    {"time": 40.216, "note": "K"},
+                    {"time": 40.671, "note": "D"},
+                    {"time": 41.127, "note": "K"},
+                    {"time": 41.623, "note": "D"},
+                    {"time": 41.835, "note": "K"},
+                    {"time": 42.487, "note": "F"},
+                    {"time": 42.999, "note": "J"},
+                    {"time": 43.48, "note": "D"},
+                    {"time": 43.759, "note": "K"},
+                    {"time": 43.967, "note": "D"},
+                    {"time": 44.158, "note": "J"},
+                    {"time": 44.391, "note": "F"},
+                    {"time": 44.575, "note": "K"},
+                    {"time": 44.793, "note": "D"},
+                    {"time": 44.959, "note": "J"},
+                    {"time": 45.167, "note": "F"},
+                    {"time": 45.335, "note": "K"},
+                    {"time": 45.495, "note": "D"},
+                    {"time": 45.72, "note": "J"},
+                    {"time": 45.895, "note": "F"}
+                ];
+
+                // Convert note letter to track index
+                const noteToTrack = { 'D': 0, 'F': 1, 'J': 2, 'K': 3 };
+
+                // Subtract 7.678 from all note times and add 7.4 second offset
+                const OFFSET = 7.4 * 1000; // Convert to milliseconds
+                const map = rawNotes.map(n => ({
+                    track: noteToTrack[n.note],
+                    time: (n.time - 7.678) * 1000 + OFFSET
+                }));
+
+                return map;
+            }
+
+            startGame() {
+                if (this.isPlaying) return;
+
+                // Resume Audio Context (needed for browsers)
+                if (this.audioCtx.state === 'suspended') {
+                    this.audioCtx.resume();
+                }
+
+                // UI Transition
+                document.getElementById('start-screen').classList.add('hidden');
+                document.getElementById('game-interface').classList.remove('hidden');
+                document.getElementById('game-interface').style.display = 'flex';
+
+                // Reset Stats
+                this.score = 0;
+                this.combo = 0;
+                this.misses = 0;
+                this.notes = [];
+                this.updateStats();
+
+                // Generate Map
+                const songData = this.generateSongMap();
+                
+                // Instantiate Notes
+                songData.forEach(n => {
+                    const noteEl = document.createElement('div');
+                    noteEl.className = 'note';
+                    // Start above screen based on time needed to reach hit line
+                    // Distance to travel = HIT_LINE_Y (420px)
+                    // We want it to arrive at n.time
+                    
+                    noteEl.dataset.track = n.track;
+                    document.getElementById(`track-${n.track}`).appendChild(noteEl);
+                    
+                    this.notes.push({
+                        track: n.track,
+                        targetTime: n.time,
+                        element: noteEl,
+                        hit: false,
+                        y: -100 // Start position
+                    });
+                });
+
+                // Start Video and Timer
+                if (isPlayerReady && player) {
+                    if (customSongData) {
+                        // For custom songs, load the video first then play
+                        player.loadVideoById(customSongData.videoId, 0);
+                    } else {
+                        player.seekTo(0);
+                        player.playVideo();
+                    }
+                }
+
+                this.startTime = performance.now();
+                this.isPlaying = true;
+                this.loop();
+            }
+
+            loop() {
+                if (!this.isPlaying) return;
+
+                const currentTime = performance.now() - this.startTime;
+                
+                // Update Notes
+                this.notes.forEach(note => {
+                    if (note.hit) return;
+
+                    // Calculate Y position based on time
+                    // We want note to be at HIT_LINE_Y at note.targetTime
+                    // We can define a scroll speed in pixels per ms
+                    // Let's say 0.5px/ms is base speed. 
+                    // Higher this.noteSpeed = faster approach time (less time on screen)
+                    
+                    // Time remaining until hit
+                    const timeToHit = note.targetTime - currentTime;
+                    
+                    // If noteSpeed is 10, let's say that means it takes 1000ms to fall
+                    // If noteSpeed is 5, it takes 2000ms to fall
+                    const fallDuration = 2500 - (this.noteSpeed * 100); 
+                    
+                    // Progress (1.0 = hit line)
+                    // If timeToHit is fallDuration, y = 0 (top)
+                    // If timeToHit is 0, y = HIT_LINE_Y
+                    
+                    // Calculate position
+                    // y = HIT_LINE_Y - (timeToHit / fallDuration * HIT_LINE_Y)
+                    // y = HIT_LINE_Y * (1 - timeToHit/fallDuration)
+                    
+                    // Simplified linear interpolation
+                    const travelDist = HIT_LINE_Y + 50; // Start 50px above
+                    const pixelOffset = (timeToHit / fallDuration) * travelDist;
+                    const currentY = HIT_LINE_Y - pixelOffset;
+
+                    note.y = currentY;
+                    
+                    // Apply visuals
+                    if (currentY > -50 && currentY < TRACK_HEIGHT + 50) {
+                        note.element.style.top = `${currentY}px`;
+                        note.element.style.display = 'block';
+                    } else {
+                        note.element.style.display = 'none';
+                    }
+
+                    // Autoplay Logic
+                    if (this.settings.autoplay && !note.hit && timeToHit <= 5 && timeToHit > -20) {
+                        this.triggerHit(note, 'perfect');
+                        this.visualizeKey(note.track, true);
+                        setTimeout(() => this.visualizeKey(note.track, false), 100);
+                    }
+
+                    // Miss Detection
+                    if (!note.hit && currentY > HIT_LINE_Y + HIT_WINDOW_GOOD) {
+                        this.triggerMiss(note);
+                    }
+                });
+
+                requestAnimationFrame(() => this.loop());
+            }
+
+            handleInput(trackIndex) {
+                if (!this.isPlaying) return;
+
+                const currentTime = performance.now() - this.startTime;
+                
+                // Find closest unhit note in this track
+                const candidates = this.notes.filter(n => !n.hit && n.track === trackIndex);
+                
+                if (candidates.length === 0) return;
+
+                // Find the one closest to target time
+                // Sort by absolute time difference
+                candidates.sort((a, b) => Math.abs(a.targetTime - currentTime) - Math.abs(b.targetTime - currentTime));
+                
+                const targetNote = candidates[0];
+                const diff = Math.abs(targetNote.targetTime - currentTime);
+
+                if (diff <= HIT_WINDOW_PERFECT) {
+                    this.triggerHit(targetNote, 'perfect');
+                } else if (diff <= HIT_WINDOW_GOOD) {
+                    this.triggerHit(targetNote, 'good');
+                } else if (diff <= 150) { // Bad/Miss window
+                    this.triggerMiss(targetNote);
+                    // Also punish score
+                    this.combo = 0;
+                    this.updateStats();
+                    this.showFeedback('BAD', 'text-red-500', trackIndex);
+                }
+                
+                // Key sound
+                if (this.settings.keySound) this.playTone(400 + (trackIndex * 100), 'triangle', 0.05);
+            }
+
+            triggerHit(note, quality) {
+                note.hit = true;
+                note.element.classList.add('hit');
+                
+                if (quality === 'perfect') {
+                    this.score += 300 + (this.combo * 10);
+                    this.perfects++;
+                    this.showFeedback('PERFECT', 'text-blue-400', note.track);
+                    if(this.settings.hitSound) this.playTone(1200, 'sine', 0.1);
+                } else {
+                    this.score += 100 + (this.combo * 5);
+                    this.goods++;
+                    this.showFeedback('GOOD', 'text-green-400', note.track);
+                    if(this.settings.hitSound) this.playTone(800, 'sine', 0.1);
+                }
+
+                this.combo++;
+                this.updateStats();
+
+                // Light up target
+                const target = document.getElementById(`target-${note.track}`);
+                target.classList.add('active');
+                setTimeout(() => target.classList.remove('active'), 100);
+            }
+
+            triggerMiss(note) {
+                note.hit = true;
+                note.element.style.opacity = 0.5;
+                note.element.style.backgroundColor = 'gray';
+                this.combo = 0;
+                this.misses++;
+                this.showFeedback('MISS', 'text-red-600', note.track);
+                this.updateStats();
+            }
+
+            visualizeKey(trackIndex, active) {
+                const targetEl = document.getElementById(`target-${trackIndex}`);
+                if (active) {
+                    targetEl.classList.add('active');
+                } else {
+                    targetEl.classList.remove('active');
+                }
+            }
+
+            showFeedback(text, colorClass, trackIndex) {
+                const trackEl = document.getElementById(`track-${trackIndex}`);
+                const el = document.createElement('div');
+                el.className = `score-pop ${colorClass}`;
+                el.innerText = text;
+                trackEl.appendChild(el);
+                setTimeout(() => el.remove(), 600);
+            }
+
+            updateStats() {
+                document.getElementById('score-display').innerText = this.score.toString().padStart(6, '0');
+                document.getElementById('combo-display').innerText = this.combo;
+                
+                const total = this.perfects + this.goods + this.misses;
+                const acc = total === 0 ? 100 : Math.floor(((this.perfects * 100 + this.goods * 50) / (total * 100)) * 100);
+                document.getElementById('accuracy-display').innerText = `${acc}%`;
+            }
+
+            playTone(freq, type, duration) {
+                const osc = this.audioCtx.createOscillator();
+                const gain = this.audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.value = freq;
+                osc.connect(gain);
+                gain.connect(this.audioCtx.destination);
+                osc.start();
+                gain.gain.exponentialRampToValueAtTime(0.00001, this.audioCtx.currentTime + duration);
+                osc.stop(this.audioCtx.currentTime + duration);
+            }
+        }
+
+        // Tab Management
+        let customSongData = null;
+        
+        document.getElementById('tab-default').addEventListener('click', () => {
+            document.getElementById('content-default').classList.remove('hidden');
+            document.getElementById('content-custom').classList.add('hidden');
+            document.getElementById('tab-default').classList.add('bg-pink-500');
+            document.getElementById('tab-default').classList.remove('bg-gray-600');
+            document.getElementById('tab-custom').classList.add('bg-gray-600');
+            document.getElementById('tab-custom').classList.remove('bg-pink-500');
+        });
+
+        document.getElementById('tab-custom').addEventListener('click', () => {
+            document.getElementById('content-default').classList.add('hidden');
+            document.getElementById('content-custom').classList.remove('hidden');
+            document.getElementById('tab-custom').classList.add('bg-pink-500');
+            document.getElementById('tab-custom').classList.remove('bg-gray-600');
+            document.getElementById('tab-default').classList.add('bg-gray-600');
+            document.getElementById('tab-default').classList.remove('bg-pink-500');
+        });
+
+        document.getElementById('load-custom-btn').addEventListener('click', () => {
+            const youtubeLink = document.getElementById('custom-youtube-link').value;
+            const songTitle = document.getElementById('custom-song-title').value;
+            const notesJsonString = document.getElementById('custom-notes-json').value;
+            const offset = parseFloat(document.getElementById('custom-offset').value);
+
+            try {
+                const notesData = JSON.parse(notesJsonString);
+                const extractedNotes = notesData.notes || notesData;
+
+                // Validate JSON structure
+                if (!Array.isArray(extractedNotes) || extractedNotes.length === 0) {
+                    alert('Invalid JSON format. Please ensure it contains a "notes" array with items.');
+                    return;
+                }
+
+                if (!extractedNotes[0].time || !extractedNotes[0].note) {
+                    alert('Invalid note format. Each note must have "time" and "note" properties.');
+                    return;
+                }
+
+                // Extract YouTube video ID from URL
+                let videoId = '';
+                const patterns = [
+                    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
+                    /youtube\.com\/embed\/([^?&\n]+)/
+                ];
+
+                for (let pattern of patterns) {
+                    const match = youtubeLink.match(pattern);
+                    if (match) {
+                        videoId = match[1];
+                        break;
+                    }
+                }
+
+                if (!videoId) {
+                    alert('Could not extract video ID from YouTube link. Please use a valid YouTube URL.');
+                    return;
+                }
+
+                // Store custom song data
+                customSongData = {
+                    title: songTitle || 'Custom Song',
+                    videoId: videoId,
+                    notes: extractedNotes,
+                    offset: offset
+                };
+
+                // Update UI
+                document.querySelector('h2').innerText = customSongData.title;
+                document.querySelector('p.text-sm').innerText = 'Custom Song';
+
+                // Load the custom YouTube video
+                if (player && isPlayerReady) {
+                    player.cueVideoById(videoId);
+                }
+
+                alert('Custom song loaded successfully! Click "CLICK TO START" to begin playing.');
+                
+            } catch (error) {
+                alert('Error parsing JSON: ' + error.message);
+            }
+        });
+
+        // Init
+        const game = new RhythmGame();
+
+    </script>
+</body>
+</html>
