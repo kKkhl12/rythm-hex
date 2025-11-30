@@ -138,28 +138,6 @@
             transform: translateX(-50%) scale(1.5);
             transition: all 0.1s ease-out;
         }
-        
-        /* Key Indicators */
-        .key-display {
-            margin-top: 10px;
-            width: 50px;
-            height: 50px;
-            border-radius: 8px;
-            background: rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 1.2rem;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.1s;
-        }
-        
-        .key-display.active {
-            background: rgba(255, 255, 255, 0.9);
-            color: black;
-            transform: translateY(4px);
-        }
 
         .score-pop {
             position: absolute;
@@ -178,10 +156,8 @@
             100% { opacity: 0; transform: translateX(-50%) translateY(-30px) scale(1.2); }
         }
 
-        /* Utility */
         .hidden { display: none !important; }
         
-        /* Custom scrollbar for settings */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
@@ -300,7 +276,22 @@
                         <span class="text-2xl">⏱️</span>
                         <div class="flex-1">
                             <label class="block text-sm font-semibold mb-1 text-white">Start Offset (seconds)</label>
-                            <input type="number" id="custom-offset" value="7.4" step="0.1" min="0" class="w-full px-4 py-3 rounded-lg bg-black/60 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 transition-all">
+                            <input type="number" id="custom-offset" value="0" step="0.1" min="0" class="w-full px-4 py-3 rounded-lg bg-black/60 border border-white/30 text-white placeholder-gray-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/50 transition-all">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">🎧</span>
+                        <div class="flex-1">
+                            <label class="block text-sm font-semibold mb-1 text-white">Or Upload MP3 (Optional)</label>
+                            <div class="flex items-center gap-2">
+                                <input type="file" id="custom-mp3-upload" accept="audio/mp3,audio/mpeg,audio/*" class="hidden">
+                                <button id="custom-mp3-btn" class="px-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-lg text-white font-bold transition-all flex items-center gap-2">
+                                    <span>📁</span> Choose MP3
+                                </button>
+                                <span id="custom-mp3-name" class="text-sm text-gray-300 flex-1">No file selected</span>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-1">Upload an MP3 instead of using YouTube audio</p>
                         </div>
                     </div>
                 </div>
@@ -320,6 +311,37 @@
                     <p class="text-xs text-gray-300 leading-relaxed">
                         Use <code class="bg-black/50 px-1 py-0.5 rounded text-purple-300">{"notes": [...]}</code> or direct array.
                         Each note: <code class="bg-black/50 px-1 py-0.5 rounded text-cyan-300">{"time": seconds, "note": "D/F/J/K"}</code>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Speed Settings (Shared between tabs) -->
+        <div class="max-w-lg w-full mt-6">
+            <div class="bg-gradient-to-br from-cyan-500/20 to-blue-600/20 p-6 rounded-2xl backdrop-blur-md border border-white/20 shadow-2xl">
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <span class="text-2xl">⚡</span> Game Settings
+                </h3>
+                
+                <div class="space-y-4">
+                    <!-- Speed Slider -->
+                    <div class="flex items-center gap-4">
+                        <span class="text-2xl">🚀</span>
+                        <div class="flex-1">
+                            <div class="flex justify-between mb-2">
+                                <label class="text-sm font-semibold text-white">Note Speed</label>
+                                <span id="start-speed-val" class="text-sm font-bold text-cyan-400">1.5s</span>
+                            </div>
+                            <input type="range" id="start-speed-slider" min="300" max="3000" value="1500" step="100" class="w-full h-2 bg-black/50 rounded-lg appearance-none cursor-pointer accent-cyan-500">
+                            <div class="flex justify-between text-xs text-gray-400 mt-1">
+                                <span>Fast (0.3s)</span>
+                                <span>Slow (3s)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-xs text-gray-400 text-center">
+                        Controls how long notes are visible before you need to hit them. Lower = faster gameplay!
                     </p>
                 </div>
             </div>
@@ -385,7 +407,7 @@
         </div>
 
         <!-- Settings Panel -->
-        <div class="mt-4 bg-black/40 p-4 rounded-lg backdrop-blur-sm flex justify-between items-center">
+        <div class="mt-4 bg-black/40 p-4 rounded-lg backdrop-blur-sm flex justify-between items-center flex-wrap gap-4">
             <div class="flex gap-6 text-sm">
                 <label class="flex items-center gap-2 cursor-pointer hover:text-white text-gray-300 transition">
                     <input type="checkbox" id="toggle-hit-sound" checked class="accent-pink-500">
@@ -399,13 +421,22 @@
                     <input type="checkbox" id="toggle-autoplay" class="accent-blue-500">
                     <span class="text-blue-300 font-bold">Autoplay (Bot)</span>
                 </label>
+                <label class="flex items-center gap-2 cursor-pointer hover:text-white text-gray-300 transition">
+                    <input type="checkbox" id="toggle-mute-song" class="accent-red-500">
+                    <span class="text-red-400 font-bold">🔇 Mute Song</span>
+                </label>
             </div>
-            <div class="flex items-center gap-2 text-sm text-gray-400">
-                <span>Speed:</span>
-                <input type="range" id="speed-slider" min="1" max="20" value="8" class="w-24 accent-purple-500">
-                <span id="speed-val">8</span>
+            <div class="flex items-center gap-4 text-sm text-gray-400">
+                <div class="flex items-center gap-2">
+                    <span>Offset:</span>
+                    <input type="range" id="offset-slider" min="-500" max="500" value="0" step="10" class="w-24 accent-cyan-500">
+                    <span id="offset-val">0ms</span>
+                </div>
             </div>
         </div>
+        
+        <!-- Audio Player for MP3 -->
+        <audio id="mp3-player" style="display: none;"></audio>
     </div>
 
     <script>
@@ -446,25 +477,23 @@
         // Game Logic
         const KEYS = ['d', 'f', 'j', 'k'];
         const KEY_CODES = ['KeyD', 'KeyF', 'KeyJ', 'KeyK'];
-        
-        // Game Constants
         const TRACK_HEIGHT = 500;
-        const HIT_LINE_Y = TRACK_HEIGHT - 80; // 420px from top
-        const HIT_WINDOW_PERFECT = 30; // +/- pixels
-        const HIT_WINDOW_GOOD = 70;
+        const HIT_LINE_Y = TRACK_HEIGHT - 80;
+        const HIT_WINDOW_PERFECT = 50;
+        const HIT_WINDOW_GOOD = 100;
         
         class RhythmGame {
             constructor() {
                 this.isPlaying = false;
                 this.startTime = 0;
-                this.notes = []; // { track: 0-3, time: ms, element: DOM, hit: bool }
-                this.noteSpeed = 8; // Pixels per frame (approx)
+                this.notes = [];
+                this.fallDuration = 1500; // How long notes are visible (in ms)
                 this.score = 0;
                 this.combo = 0;
-                this.maxCombo = 0;
                 this.perfects = 0;
                 this.goods = 0;
                 this.misses = 0;
+                this.timingOffset = 0;
                 
                 this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 
@@ -475,15 +504,26 @@
                 };
 
                 this.bindEvents();
+                this.bindStartScreenEvents();
+            }
+            
+            bindStartScreenEvents() {
+                // Speed slider on start screen
+                const startSpeedSlider = document.getElementById('start-speed-slider');
+                const startSpeedVal = document.getElementById('start-speed-val');
+                
+                startSpeedSlider.addEventListener('input', (e) => {
+                    this.fallDuration = parseInt(e.target.value);
+                    startSpeedVal.innerText = (this.fallDuration / 1000).toFixed(1) + 's';
+                });
             }
 
             bindEvents() {
-                // Keyboard Inputs
                 window.addEventListener('keydown', (e) => {
                     if (e.repeat) return;
                     const keyIndex = KEY_CODES.indexOf(e.code);
                     if (keyIndex !== -1) {
-                        if(e.code === 'KeyF') e.preventDefault(); // Stop fullscreen
+                        if(e.code === 'KeyF') e.preventDefault();
                         this.handleInput(keyIndex);
                         this.visualizeKey(keyIndex, true);
                     }
@@ -496,25 +536,37 @@
                     }
                 });
 
-                // UI Controls
                 document.getElementById('start-btn').addEventListener('click', () => this.startGame());
                 
                 document.getElementById('toggle-hit-sound').addEventListener('change', (e) => this.settings.hitSound = e.target.checked);
                 document.getElementById('toggle-key-sound').addEventListener('change', (e) => this.settings.keySound = e.target.checked);
                 document.getElementById('toggle-autoplay').addEventListener('change', (e) => this.settings.autoplay = e.target.checked);
                 
-                const speedSlider = document.getElementById('speed-slider');
-                speedSlider.addEventListener('input', (e) => {
-                    this.noteSpeed = parseInt(e.target.value);
-                    document.getElementById('speed-val').innerText = this.noteSpeed;
+                document.getElementById('toggle-mute-song').addEventListener('change', (e) => {
+                    if (player) {
+                        if (e.target.checked) {
+                            player.mute();
+                        } else {
+                            player.unMute();
+                        }
+                    }
+                    const mp3Player = document.getElementById('mp3-player');
+                    if (mp3Player) {
+                        mp3Player.muted = e.target.checked;
+                    }
+                });
+
+                const offsetSlider = document.getElementById('offset-slider');
+                offsetSlider.addEventListener('input', (e) => {
+                    this.timingOffset = parseInt(e.target.value);
+                    document.getElementById('offset-val').innerText = this.timingOffset + 'ms';
                 });
             }
 
             generateSongMap() {
-                // Check if custom song is loaded
                 if (customSongData) {
                     const noteToTrack = { 'D': 0, 'F': 1, 'J': 2, 'K': 3 };
-                    const OFFSET = customSongData.offset * 1000; // Convert to milliseconds
+                    const OFFSET = customSongData.offset * 1000;
                     const map = customSongData.notes.map(n => ({
                         track: noteToTrack[n.note],
                         time: n.time * 1000 + OFFSET
@@ -522,156 +574,152 @@
                     return map;
                 }
 
-                // Default song: Actual note data from Lil Peep - Nuts
                 const rawNotes = [
-                    {"time": 7.678, "note": "D"},
-                    {"time": 8.022, "note": "F"},
-                    {"time": 8.191, "note": "J"},
-                    {"time": 8.4, "note": "D"},
-                    {"time": 8.59, "note": "K"},
-                    {"time": 8.799, "note": "F"},
-                    {"time": 9.062, "note": "K"},
-                    {"time": 9.358, "note": "F"},
-                    {"time": 9.767, "note": "K"},
-                    {"time": 10.039, "note": "D"},
-                    {"time": 10.239, "note": "J"},
-                    {"time": 10.519, "note": "F"},
-                    {"time": 10.742, "note": "K"},
-                    {"time": 11.046, "note": "K"},
-                    {"time": 11.71, "note": "D"},
-                    {"time": 11.918, "note": "J"},
-                    {"time": 12.19, "note": "F"},
-                    {"time": 12.44, "note": "K"},
-                    {"time": 12.662, "note": "D"},
-                    {"time": 12.894, "note": "J"},
-                    {"time": 13.191, "note": "F"},
-                    {"time": 13.662, "note": "K"},
-                    {"time": 13.886, "note": "D"},
-                    {"time": 14.102, "note": "J"},
-                    {"time": 14.334, "note": "F"},
-                    {"time": 14.582, "note": "D"},
-                    {"time": 14.878, "note": "F"},
-                    {"time": 15.486, "note": "J"},
-                    {"time": 15.798, "note": "D"},
-                    {"time": 15.974, "note": "K"},
-                    {"time": 16.497, "note": "F"},
-                    {"time": 16.502, "note": "J"},
-                    {"time": 16.982, "note": "D"},
-                    {"time": 17.007, "note": "K"},
-                    {"time": 17.479, "note": "J"},
-                    {"time": 17.766, "note": "F"},
-                    {"time": 18.006, "note": "J"},
-                    {"time": 18.286, "note": "F"},
-                    {"time": 18.51, "note": "D"},
-                    {"time": 19.006, "note": "D"},
-                    {"time": 19.008, "note": "K"},
-                    {"time": 19.43, "note": "J"},
-                    {"time": 19.638, "note": "F"},
-                    {"time": 19.902, "note": "K"},
-                    {"time": 20.142, "note": "D"},
-                    {"time": 20.342, "note": "J"},
-                    {"time": 20.83, "note": "D"},
-                    {"time": 20.854, "note": "K"},
-                    {"time": 21.382, "note": "F"},
-                    {"time": 21.623, "note": "J"},
-                    {"time": 21.87, "note": "D"},
-                    {"time": 22.023, "note": "K"},
-                    {"time": 22.239, "note": "F"},
-                    {"time": 22.391, "note": "D"},
-                    {"time": 22.79, "note": "F"},
-                    {"time": 22.823, "note": "J"},
-                    {"time": 23.272, "note": "D"},
-                    {"time": 23.534, "note": "K"},
-                    {"time": 23.766, "note": "F"},
-                    {"time": 23.974, "note": "J"},
-                    {"time": 24.198, "note": "D"},
-                    {"time": 24.386, "note": "K"},
-                    {"time": 24.783, "note": "F"},
-                    {"time": 24.784, "note": "J"},
-                    {"time": 24.982, "note": "F"},
-                    {"time": 25.026, "note": "J"},
-                    {"time": 25.198, "note": "F"},
-                    {"time": 25.23, "note": "J"},
-                    {"time": 25.598, "note": "K"},
-                    {"time": 25.87, "note": "D"},
-                    {"time": 26.128, "note": "K"},
-                    {"time": 26.362, "note": "D"},
-                    {"time": 26.606, "note": "J"},
-                    {"time": 26.902, "note": "F"},
-                    {"time": 27.128, "note": "K"},
-                    {"time": 27.39, "note": "D"},
-                    {"time": 27.718, "note": "J"},
-                    {"time": 27.897, "note": "F"},
-                    {"time": 28.111, "note": "K"},
-                    {"time": 28.287, "note": "D"},
-                    {"time": 28.648, "note": "J"},
-                    {"time": 29.633, "note": "J"},
-                    {"time": 29.636, "note": "K"},
-                    {"time": 29.655, "note": "D"},
-                    {"time": 29.657, "note": "F"},
-                    {"time": 30.927, "note": "J"},
-                    {"time": 31.159, "note": "F"},
-                    {"time": 31.358, "note": "K"},
-                    {"time": 31.91, "note": "D"},
-                    {"time": 32.11, "note": "J"},
-                    {"time": 32.32, "note": "F"},
-                    {"time": 32.554, "note": "K"},
-                    {"time": 32.79, "note": "D"},
-                    {"time": 33.008, "note": "J"},
-                    {"time": 33.367, "note": "F"},
-                    {"time": 33.583, "note": "K"},
-                    {"time": 33.807, "note": "D"},
-                    {"time": 33.975, "note": "J"},
-                    {"time": 34.23, "note": "F"},
-                    {"time": 34.441, "note": "K"},
-                    {"time": 34.656, "note": "D"},
-                    {"time": 34.871, "note": "J"},
-                    {"time": 35.103, "note": "F"},
-                    {"time": 35.311, "note": "K"},
-                    {"time": 35.598, "note": "D"},
-                    {"time": 35.825, "note": "J"},
-                    {"time": 36.047, "note": "F"},
-                    {"time": 36.271, "note": "J"},
-                    {"time": 36.527, "note": "D"},
-                    {"time": 36.735, "note": "K"},
-                    {"time": 36.946, "note": "F"},
-                    {"time": 37.03, "note": "J"},
-                    {"time": 37.687, "note": "K"},
-                    {"time": 38.239, "note": "D"},
-                    {"time": 38.282, "note": "K"},
-                    {"time": 38.719, "note": "J"},
-                    {"time": 38.948, "note": "F"},
-                    {"time": 39.191, "note": "K"},
-                    {"time": 39.516, "note": "D"},
-                    {"time": 39.719, "note": "J"},
-                    {"time": 40.017, "note": "F"},
-                    {"time": 40.216, "note": "K"},
-                    {"time": 40.671, "note": "D"},
-                    {"time": 41.127, "note": "K"},
-                    {"time": 41.623, "note": "D"},
-                    {"time": 41.835, "note": "K"},
-                    {"time": 42.487, "note": "F"},
-                    {"time": 42.999, "note": "J"},
-                    {"time": 43.48, "note": "D"},
-                    {"time": 43.759, "note": "K"},
-                    {"time": 43.967, "note": "D"},
-                    {"time": 44.158, "note": "J"},
-                    {"time": 44.391, "note": "F"},
-                    {"time": 44.575, "note": "K"},
-                    {"time": 44.793, "note": "D"},
-                    {"time": 44.959, "note": "J"},
-                    {"time": 45.167, "note": "F"},
-                    {"time": 45.335, "note": "K"},
-                    {"time": 45.495, "note": "D"},
-                    {"time": 45.72, "note": "J"},
-                    {"time": 45.895, "note": "F"}
+                    {time: 7.678, note: "D"},
+                    {time: 8.022, note: "F"},
+                    {time: 8.191, note: "J"},
+                    {time: 8.4, note: "D"},
+                    {time: 8.59, note: "K"},
+                    {time: 8.799, note: "F"},
+                    {time: 9.062, note: "K"},
+                    {time: 9.358, note: "F"},
+                    {time: 9.767, note: "K"},
+                    {time: 10.039, note: "D"},
+                    {time: 10.239, note: "J"},
+                    {time: 10.519, note: "F"},
+                    {time: 10.742, note: "K"},
+                    {time: 11.046, note: "K"},
+                    {time: 11.71, note: "D"},
+                    {time: 11.918, note: "J"},
+                    {time: 12.19, note: "F"},
+                    {time: 12.44, note: "K"},
+                    {time: 12.662, note: "D"},
+                    {time: 12.894, note: "J"},
+                    {time: 13.191, note: "F"},
+                    {time: 13.662, note: "K"},
+                    {time: 13.886, note: "D"},
+                    {time: 14.102, note: "J"},
+                    {time: 14.334, note: "F"},
+                    {time: 14.582, note: "D"},
+                    {time: 14.878, note: "F"},
+                    {time: 15.486, note: "J"},
+                    {time: 15.798, note: "D"},
+                    {time: 15.974, note: "K"},
+                    {time: 16.497, note: "F"},
+                    {time: 16.502, note: "J"},
+                    {time: 16.982, note: "D"},
+                    {time: 17.007, note: "K"},
+                    {time: 17.479, note: "J"},
+                    {time: 17.766, note: "F"},
+                    {time: 18.006, note: "J"},
+                    {time: 18.286, note: "F"},
+                    {time: 18.51, note: "D"},
+                    {time: 19.006, note: "D"},
+                    {time: 19.008, note: "K"},
+                    {time: 19.43, note: "J"},
+                    {time: 19.638, note: "F"},
+                    {time: 19.902, note: "K"},
+                    {time: 20.142, note: "D"},
+                    {time: 20.342, note: "J"},
+                    {time: 20.83, note: "D"},
+                    {time: 20.854, note: "K"},
+                    {time: 21.382, note: "F"},
+                    {time: 21.623, note: "J"},
+                    {time: 21.87, note: "D"},
+                    {time: 22.023, note: "K"},
+                    {time: 22.239, note: "F"},
+                    {time: 22.391, note: "D"},
+                    {time: 22.79, note: "F"},
+                    {time: 22.823, note: "J"},
+                    {time: 23.272, note: "D"},
+                    {time: 23.534, note: "K"},
+                    {time: 23.766, note: "F"},
+                    {time: 23.974, note: "J"},
+                    {time: 24.198, note: "D"},
+                    {time: 24.386, note: "K"},
+                    {time: 24.783, note: "F"},
+                    {time: 24.784, note: "J"},
+                    {time: 24.982, note: "F"},
+                    {time: 25.026, note: "J"},
+                    {time: 25.198, note: "F"},
+                    {time: 25.23, note: "J"},
+                    {time: 25.598, note: "K"},
+                    {time: 25.87, note: "D"},
+                    {time: 26.128, note: "K"},
+                    {time: 26.362, note: "D"},
+                    {time: 26.606, note: "J"},
+                    {time: 26.902, note: "F"},
+                    {time: 27.128, note: "K"},
+                    {time: 27.39, note: "D"},
+                    {time: 27.718, note: "J"},
+                    {time: 27.897, note: "F"},
+                    {time: 28.111, note: "K"},
+                    {time: 28.287, note: "D"},
+                    {time: 28.648, note: "J"},
+                    {time: 29.633, note: "J"},
+                    {time: 29.636, note: "K"},
+                    {time: 29.655, note: "D"},
+                    {time: 29.657, note: "F"},
+                    {time: 30.927, note: "J"},
+                    {time: 31.159, note: "F"},
+                    {time: 31.358, note: "K"},
+                    {time: 31.91, note: "D"},
+                    {time: 32.11, note: "J"},
+                    {time: 32.32, note: "F"},
+                    {time: 32.554, note: "K"},
+                    {time: 32.79, note: "D"},
+                    {time: 33.008, note: "J"},
+                    {time: 33.367, note: "F"},
+                    {time: 33.583, note: "K"},
+                    {time: 33.807, note: "D"},
+                    {time: 33.975, note: "J"},
+                    {time: 34.23, note: "F"},
+                    {time: 34.441, note: "K"},
+                    {time: 34.656, note: "D"},
+                    {time: 34.871, note: "J"},
+                    {time: 35.103, note: "F"},
+                    {time: 35.311, note: "K"},
+                    {time: 35.598, note: "D"},
+                    {time: 35.825, note: "J"},
+                    {time: 36.047, note: "F"},
+                    {time: 36.271, note: "J"},
+                    {time: 36.527, note: "D"},
+                    {time: 36.735, note: "K"},
+                    {time: 36.946, note: "F"},
+                    {time: 37.03, note: "J"},
+                    {time: 37.687, note: "K"},
+                    {time: 38.239, note: "D"},
+                    {time: 38.282, note: "K"},
+                    {time: 38.719, note: "J"},
+                    {time: 38.948, note: "F"},
+                    {time: 39.191, note: "K"},
+                    {time: 39.516, note: "D"},
+                    {time: 39.719, note: "J"},
+                    {time: 40.017, note: "F"},
+                    {time: 40.216, note: "K"},
+                    {time: 40.671, note: "D"},
+                    {time: 41.127, note: "K"},
+                    {time: 41.623, note: "D"},
+                    {time: 41.835, note: "K"},
+                    {time: 42.487, note: "F"},
+                    {time: 42.999, note: "J"},
+                    {time: 43.48, note: "D"},
+                    {time: 43.759, note: "K"},
+                    {time: 43.967, note: "D"},
+                    {time: 44.158, note: "J"},
+                    {time: 44.391, note: "F"},
+                    {time: 44.575, note: "K"},
+                    {time: 44.793, note: "D"},
+                    {time: 44.959, note: "J"},
+                    {time: 45.167, note: "F"},
+                    {time: 45.335, note: "K"},
+                    {time: 45.495, note: "D"},
+                    {time: 45.72, note: "J"},
+                    {time: 45.895, note: "F"}
                 ];
 
-                // Convert note letter to track index
                 const noteToTrack = { 'D': 0, 'F': 1, 'J': 2, 'K': 3 };
-
-                // Subtract 7.678 from all note times and add 7.4 second offset
-                const OFFSET = 7.4 * 1000; // Convert to milliseconds
+                const OFFSET = 7.4 * 1000;
                 const map = rawNotes.map(n => ({
                     track: noteToTrack[n.note],
                     time: (n.time - 7.678) * 1000 + OFFSET
@@ -683,34 +731,25 @@
             startGame() {
                 if (this.isPlaying) return;
 
-                // Resume Audio Context (needed for browsers)
                 if (this.audioCtx.state === 'suspended') {
                     this.audioCtx.resume();
                 }
 
-                // UI Transition
                 document.getElementById('start-screen').classList.add('hidden');
                 document.getElementById('game-interface').classList.remove('hidden');
                 document.getElementById('game-interface').style.display = 'flex';
 
-                // Reset Stats
                 this.score = 0;
                 this.combo = 0;
                 this.misses = 0;
                 this.notes = [];
                 this.updateStats();
 
-                // Generate Map
                 const songData = this.generateSongMap();
                 
-                // Instantiate Notes
                 songData.forEach(n => {
                     const noteEl = document.createElement('div');
                     noteEl.className = 'note';
-                    // Start above screen based on time needed to reach hit line
-                    // Distance to travel = HIT_LINE_Y (420px)
-                    // We want it to arrive at n.time
-                    
                     noteEl.dataset.track = n.track;
                     document.getElementById(`track-${n.track}`).appendChild(noteEl);
                     
@@ -719,64 +758,63 @@
                         targetTime: n.time,
                         element: noteEl,
                         hit: false,
-                        y: -100 // Start position
+                        y: -100
                     });
                 });
 
-                // Start Video and Timer
-                if (isPlayerReady && player) {
-                    if (customSongData) {
-                        // For custom songs, load the video first then play
-                        player.loadVideoById(customSongData.videoId, 0);
-                    } else {
-                        player.seekTo(0);
-                        player.playVideo();
-                    }
-                }
-
                 this.startTime = performance.now();
                 this.isPlaying = true;
+                
+                setTimeout(() => {
+                    // Check if MP3 is loaded
+                    const mp3Player = document.getElementById('mp3-player');
+                    if (mp3Player && mp3Player.src) {
+                        mp3Player.currentTime = 0;
+                        mp3Player.play();
+                    } else if (isPlayerReady && player) {
+                        if (customSongData) {
+                            player.loadVideoById(customSongData.videoId, 0);
+                            setTimeout(() => {
+                                if (player.getPlayerState && player.getPlayerState() !== 1) {
+                                    player.playVideo();
+                                }
+                            }, 500);
+                        } else {
+                            player.seekTo(0);
+                            player.playVideo();
+                        }
+                    }
+                }, 100);
+                
                 this.loop();
             }
 
             loop() {
                 if (!this.isPlaying) return;
 
-                const currentTime = performance.now() - this.startTime;
+                let currentTime;
                 
-                // Update Notes
+                const mp3Player = document.getElementById('mp3-player');
+                if (mp3Player && mp3Player.src && !mp3Player.paused) {
+                    currentTime = mp3Player.currentTime * 1000 + this.timingOffset;
+                } else if (player && player.getCurrentTime) {
+                    currentTime = player.getCurrentTime() * 1000 + this.timingOffset;
+                } else {
+                    currentTime = (performance.now() - this.startTime) + this.timingOffset;
+                }
+                
                 this.notes.forEach(note => {
                     if (note.hit) return;
 
-                    // Calculate Y position based on time
-                    // We want note to be at HIT_LINE_Y at note.targetTime
-                    // We can define a scroll speed in pixels per ms
-                    // Let's say 0.5px/ms is base speed. 
-                    // Higher this.noteSpeed = faster approach time (less time on screen)
-                    
-                    // Time remaining until hit
                     const timeToHit = note.targetTime - currentTime;
                     
-                    // If noteSpeed is 10, let's say that means it takes 1000ms to fall
-                    // If noteSpeed is 5, it takes 2000ms to fall
-                    const fallDuration = 2500 - (this.noteSpeed * 100); 
-                    
-                    // Progress (1.0 = hit line)
-                    // If timeToHit is fallDuration, y = 0 (top)
-                    // If timeToHit is 0, y = HIT_LINE_Y
-                    
-                    // Calculate position
-                    // y = HIT_LINE_Y - (timeToHit / fallDuration * HIT_LINE_Y)
-                    // y = HIT_LINE_Y * (1 - timeToHit/fallDuration)
-                    
-                    // Simplified linear interpolation
-                    const travelDist = HIT_LINE_Y + 50; // Start 50px above
-                    const pixelOffset = (timeToHit / fallDuration) * travelDist;
+                    // Use fallDuration - notes are visible for this many ms before hitting
+                    const travelDist = HIT_LINE_Y + 50;
+                    const pixelOffset = (timeToHit / this.fallDuration) * travelDist;
                     const currentY = HIT_LINE_Y - pixelOffset;
 
                     note.y = currentY;
                     
-                    // Apply visuals
                     if (currentY > -50 && currentY < TRACK_HEIGHT + 50) {
                         note.element.style.top = `${currentY}px`;
                         note.element.style.display = 'block';
@@ -784,14 +822,12 @@
                         note.element.style.display = 'none';
                     }
 
-                    // Autoplay Logic
-                    if (this.settings.autoplay && !note.hit && timeToHit <= 5 && timeToHit > -20) {
+                    if (this.settings.autoplay && !note.hit && timeToHit <= 10 && timeToHit > -30) {
                         this.triggerHit(note, 'perfect');
                         this.visualizeKey(note.track, true);
                         setTimeout(() => this.visualizeKey(note.track, false), 100);
                     }
 
-                    // Miss Detection
                     if (!note.hit && currentY > HIT_LINE_Y + HIT_WINDOW_GOOD) {
                         this.triggerMiss(note);
                     }
@@ -803,15 +839,17 @@
             handleInput(trackIndex) {
                 if (!this.isPlaying) return;
 
-                const currentTime = performance.now() - this.startTime;
+                let currentTime;
+                if (player && player.getCurrentTime) {
+                    currentTime = player.getCurrentTime() * 1000 + this.timingOffset;
+                } else {
+                    currentTime = (performance.now() - this.startTime) + this.timingOffset;
+                }
                 
-                // Find closest unhit note in this track
                 const candidates = this.notes.filter(n => !n.hit && n.track === trackIndex);
                 
                 if (candidates.length === 0) return;
 
-                // Find the one closest to target time
-                // Sort by absolute time difference
                 candidates.sort((a, b) => Math.abs(a.targetTime - currentTime) - Math.abs(b.targetTime - currentTime));
                 
                 const targetNote = candidates[0];
@@ -821,15 +859,13 @@
                     this.triggerHit(targetNote, 'perfect');
                 } else if (diff <= HIT_WINDOW_GOOD) {
                     this.triggerHit(targetNote, 'good');
-                } else if (diff <= 150) { // Bad/Miss window
+                } else if (diff <= 200) {
                     this.triggerMiss(targetNote);
-                    // Also punish score
                     this.combo = 0;
                     this.updateStats();
                     this.showFeedback('BAD', 'text-red-500', trackIndex);
                 }
                 
-                // Key sound
                 if (this.settings.keySound) this.playTone(400 + (trackIndex * 100), 'triangle', 0.05);
             }
 
@@ -852,7 +888,6 @@
                 this.combo++;
                 this.updateStats();
 
-                // Light up target
                 const target = document.getElementById(`target-${note.track}`);
                 target.classList.add('active');
                 setTimeout(() => target.classList.remove('active'), 100);
@@ -908,7 +943,6 @@
             }
         }
 
-        // Tab Management
         let customSongData = null;
         
         document.getElementById('tab-default').addEventListener('click', () => {
@@ -929,17 +963,38 @@
             document.getElementById('tab-default').classList.remove('bg-pink-500');
         });
 
+        // Custom MP3 upload handling
+        const customMp3Btn = document.getElementById('custom-mp3-btn');
+        const customMp3Upload = document.getElementById('custom-mp3-upload');
+        const customMp3Name = document.getElementById('custom-mp3-name');
+        
+        customMp3Btn.addEventListener('click', () => {
+            customMp3Upload.click();
+        });
+        
+        customMp3Upload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && file.type.includes('audio')) {
+                const fileURL = URL.createObjectURL(file);
+                mp3Player.src = fileURL;
+                customMp3Name.innerText = file.name;
+                customMp3Name.style.color = '#a78bfa'; // purple color
+            } else if (file) {
+                alert('❌ Please select a valid audio file');
+            }
+        });
+
         document.getElementById('load-custom-btn').addEventListener('click', () => {
             const youtubeLink = document.getElementById('custom-youtube-link').value;
             const songTitle = document.getElementById('custom-song-title').value;
             const notesJsonString = document.getElementById('custom-notes-json').value;
             const offset = parseFloat(document.getElementById('custom-offset').value);
+            const hasMP3 = mp3Player.src && customMp3Name.innerText !== 'No file selected';
 
             try {
                 const notesData = JSON.parse(notesJsonString);
                 const extractedNotes = notesData.notes || notesData;
 
-                // Validate JSON structure
                 if (!Array.isArray(extractedNotes) || extractedNotes.length === 0) {
                     alert('Invalid JSON format. Please ensure it contains a "notes" array with items.');
                     return;
@@ -950,52 +1005,52 @@
                     return;
                 }
 
-                // Extract YouTube video ID from URL
                 let videoId = '';
-                const patterns = [
-                    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
-                    /youtube\.com\/embed\/([^?&\n]+)/
-                ];
+                if (!hasMP3) {
+                    const patterns = [
+                        /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/,
+                        /youtube\.com\/embed\/([^?&\n]+)/
+                    ];
 
-                for (let pattern of patterns) {
-                    const match = youtubeLink.match(pattern);
-                    if (match) {
-                        videoId = match[1];
-                        break;
+                    for (let pattern of patterns) {
+                        const match = youtubeLink.match(pattern);
+                        if (match) {
+                            videoId = match[1];
+                            break;
+                        }
+                    }
+
+                    if (!videoId && !hasMP3) {
+                        alert('Please provide either a YouTube link or upload an MP3 file.');
+                        return;
                     }
                 }
 
-                if (!videoId) {
-                    alert('Could not extract video ID from YouTube link. Please use a valid YouTube URL.');
-                    return;
-                }
-
-                // Store custom song data
                 customSongData = {
                     title: songTitle || 'Custom Song',
                     videoId: videoId,
                     notes: extractedNotes,
-                    offset: offset
+                    offset: offset,
+                    hasMP3: hasMP3
                 };
 
-                // Update UI
                 document.querySelector('h2').innerText = customSongData.title;
-                document.querySelector('p.text-sm').innerText = 'Custom Song';
+                document.querySelector('p.text-gray-400').innerText = hasMP3 ? 'Custom Song (MP3)' : 'Custom Song';
 
-                // Load the custom YouTube video
-                if (player && isPlayerReady) {
+                if (videoId && player && isPlayerReady) {
                     player.cueVideoById(videoId);
                 }
 
-                alert('Custom song loaded successfully! Click "CLICK TO START" to begin playing.');
+                const audioSource = hasMP3 ? 'MP3' : 'YouTube';
+                alert(`✅ Custom song loaded successfully!\n🎵 Audio: ${audioSource}\n🎮 Click "CLICK TO START" to begin playing.`);
                 
             } catch (error) {
                 alert('Error parsing JSON: ' + error.message);
             }
         });
 
-        // Init
         const game = new RhythmGame();
+        const mp3Player = document.getElementById('mp3-player');
 
     </script>
 </body>
